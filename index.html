@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>OCR Project</title>
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css"
+      integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb"
+      crossorigin="anonymous"
+    />
+    <script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
+    <style type="text/css">
+      /* Start by setting display:none to make this hidden.
+Then we position it in relation to the viewport window
+with position:fixed. Width, height, top and left speak
+for themselves. Background we set to 80% white with
+our animation centered, and no-repeating */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.8)
+          url("http://i.stack.imgur.com/FhHRx.gif") 50% 50% no-repeat;
+      }
+
+      /* When the body has the loading class, we turn
+the scrollbar off with overflow:hidden */
+      body.loading {
+        overflow: hidden;
+      }
+
+      /* Anytime the body has the loading class, our
+modal element will be visible */
+      body.loading .modal {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="jumbotron">
+        <h1>Object Character Recognition</h1>
+        <p>
+          This website uses OpenCVJS and tesseract.js to perform object
+          character recognition.
+        </p>
+      </div>
+      <div class="row">
+        <div class="col-sm">
+          <div class="card">
+            <div class="card-header">Original Image</div>
+            <div
+              class="card-block text-center"
+              style="width: 1280px; height: 720px"
+            >
+              <img id="imageOriginal" alt="Upload" class="card-img-top" />
+            </div>
+            <div class="card-footer text-muted">
+              <input type="file" id="imageInput" name="file" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm">
+          <div class="card">
+            <div class="card-header">Modified Image</div>
+            <div class="card-block" style="width: 1280px; height: 720px">
+              <canvas id="imageCanvas"></canvas>
+            </div>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">
+                <button
+                  type="button"
+                  id="circlesButton"
+                  class="btn btn-primary"
+                >
+                  Circle Detection
+                </button>
+              </li>
+            </ul>
+            <div class="card-footer">
+              <a href="#" id="button" class="card-link">Download Image</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm">
+          <div class="card">
+            <div class="card-header">Gray Image</div>
+            <div class="card-block">
+              <canvas id="grayCanvas"></canvas>
+            </div>
+            <div class="card-footer text-muted"></div>
+          </div>
+        </div>
+        <div class="col-sm"></div>
+      </div>
+      <div class="row">
+        <div class="col-sm">
+          <div class="card">
+            <div class="card-header">Blur Image</div>
+            <div class="card-block">
+              <canvas id="blurCanvas"></canvas>
+            </div>
+            <div class="card-footer text-muted"></div>
+          </div>
+        </div>
+        <div class="col-sm"></div>
+      </div>
+      <div class="row">
+        <div class="col-sm">
+          <div class="card">
+            <div class="card-header">Sharp Image</div>
+            <div class="card-block">
+              <canvas id="sharpCanvas"></canvas>
+            </div>
+            <div class="card-footer text-muted"></div>
+          </div>
+        </div>
+        <div class="col-sm"></div>
+      </div>
+      <div class="row">
+        <div class="col-sm">
+          <div class="card">
+            <div class="card-header">Dilate Image</div>
+            <div class="card-block">
+              <canvas id="dilateCanvas"></canvas>
+            </div>
+            <div class="card-footer text-muted"></div>
+          </div>
+        </div>
+        <div class="col-sm"></div>
+      </div>
+      <div class="row">
+        <div class="col-sm">
+          <div class="card">
+            <div class="card-header">Contour Image</div>
+            <div class="card-block">
+              <canvas id="contourCanvas"></canvas>
+            </div>
+            <div class="card-footer text-muted"></div>
+          </div>
+        </div>
+        <div class="col-sm"></div>
+      </div>
+      <div class="row">
+        <div class="col-sm">
+          <div class="card">
+            <div class="card-header">Parse Image</div>
+            <div class="card-block">
+              <canvas id="parseCanvas"></canvas>
+            </div>
+            <div class="card-footer text-muted"></div>
+          </div>
+        </div>
+        <div class="col-sm"></div>
+      </div>
+    </div>
+    <div class="modal"></div>
+    <script type="text/javascript">
+      document.body.classList.add("loading");
+
+      let imgElement = document.getElementById("imageOriginal");
+      let inputElement = document.getElementById("imageInput");
+      inputElement.addEventListener(
+        "change",
+        (e) => {
+          imgElement.src = URL.createObjectURL(e.target.files[0]);
+        },
+        false
+      );
+      let mat;
+
+      imgElement.onload = function () {
+        mat = cv.imread(imgElement);
+        console.log(mat.size());
+        cv.imshow("imageCanvas", mat);
+      };
+
+      document.getElementById("circlesButton").onclick = function () {
+        this.disabled = true;
+
+        let dst = mat.clone();
+        let angle = getSkewAngle(mat);
+        console.log(angle);
+        // cv.imshow("imageCanvas", angle);
+        mat = rotateImage(mat, angle);
+        cv.imshow("imageCanvas", mat);
+
+        parseImg(mat);
+
+        let startTime = performance.now();
+        Tesseract.recognize(document.getElementById("parseCanvas"), "eng", {
+          //   logger: (m) => console.log(m),
+        })
+          .catch((err) => {
+            console.log(err);
+          })
+          .then(({ data: { text } }) => {
+            let myRe = /\d{4,}\-\w\d+/;
+            console.log(text);
+            console.log(myRe.exec(text));
+            let endTime = performance.now();
+            console.log(`OCR completed in: ${(endTime - startTime) / 1000}`);
+          });
+
+        mat.delete();
+        dst.delete();
+
+        this.disabled = false;
+      };
+
+      document.getElementById("button").onclick = function () {
+        this.href = document.getElementById("imageCanvas").toDataURL();
+        this.download = "image.png";
+      };
+
+      function onOpenCvReady() {
+        document.body.classList.remove("loading");
+      }
+
+      function parseImg(img) {
+        newImage = img.clone();
+        let gray = new cv.Mat();
+        let blurimg = new cv.Mat();
+        let unsharp_image = new cv.Mat();
+
+        cv.cvtColor(img, gray, cv.COLOR_BGR2GRAY);
+        cv.GaussianBlur(gray, blurimg, new cv.Size(0, 0), 3.0);
+        cv.addWeighted(gray, 2.8, blurimg, 0.4, 0, unsharp_image);
+        cv.imshow("parseCanvas", unsharp_image);
+      }
+
+      function getSkewAngle(img) {
+        newImage = img.clone();
+        let gray = new cv.Mat();
+        let blurimg = new cv.Mat();
+        let unsharp_image = new cv.Mat();
+        let threshold = new cv.Mat();
+        let dilate = new cv.Mat();
+        let contours = new cv.MatVector();
+        let hierarchy = new cv.Mat();
+        let contourArray = [];
+        let box = [];
+
+        cv.cvtColor(img, gray, cv.COLOR_BGR2GRAY);
+        cv.GaussianBlur(gray, blurimg, new cv.Size(0, 0), 5.0);
+        cv.addWeighted(gray, 4.0, blurimg, 1, 0, unsharp_image);
+
+        cv.threshold(
+          unsharp_image,
+          threshold,
+          0,
+          255,
+          cv.THRESH_BINARY_INV + cv.THRESH_OTSU
+        );
+        console.log(gray.size());
+        cv.imshow("grayCanvas", gray);
+        console.log(gray.size());
+        cv.imshow("blurCanvas", blurimg);
+        cv.imshow("sharpCanvas", unsharp_image);
+        kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(30, 1));
+        cv.dilate(threshold, dilate, kernel);
+        console.log(dilate.size());
+        cv.imshow("dilateCanvas", dilate);
+        cv.findContours(
+          dilate,
+          contours,
+          hierarchy,
+          cv.RETR_LIST,
+          cv.CHAIN_APPROX_SIMPLE
+        );
+        for (let i = 0; i < contours.size(); i++) {
+          //   contourArray.push(cv.minAreaRect(contours.get(i)));
+          contourArray.push(contours.get(i));
+
+          //   cv.cvtColor(newImage, newImage, cv.COLOR_GRAY2BGR);
+
+          //   console.log(
+          //     new cv.Scalar(
+          //       Math.floor(Math.random * 255) + 1,
+          //       Math.floor(Math.random * 255) + 1,
+          //       Math.floor(Math.random * 255) + 1,
+          //       Math.floor(Math.random * 255) + 1
+          //     )
+          //   );
+
+          if (cv.contourArea(contourArray[i]) > 1000) {
+            let a = Math.floor(Math.random() * 255) + 1;
+            let b = Math.floor(Math.random() * 255) + 1;
+            let c = Math.floor(Math.random() * 255) + 1;
+            let d = Math.floor(Math.random() * 255) + 1;
+
+            cv.drawContours(
+              newImage,
+              contours,
+              i,
+              //   new cv.Scalar(
+              //     Math.floor(Math.Random * 255) + 1,
+              //     Math.floor(Math.Random * 255) + 1,
+              //     Math.floor(Math.Random * 255) + 1,
+              //     Math.floor(Math.Random * 255) + 1
+              //   ),
+              new cv.Scalar(a, b, c, 255),
+              3
+            );
+          }
+        }
+
+        let filteredContour = [];
+
+        for (let i = 0; i < contourArray.length; i++) {
+          if (cv.contourArea(contourArray[i]) > 1000) {
+            filteredContour.push(contourArray[i]);
+          }
+        }
+        cv.imshow("contourCanvas", newImage);
+        // console.log(cv.minAreaRect(contours.get(0)));
+        contourArray.sort(
+          (a, b) => -1 * (cv.contourArea(a) - cv.contourArea(b))
+        );
+
+        let minAreaBoxArray = [];
+        for (let i = 0; i < contourArray.length; i++) {
+          minAreaBoxArray.push(cv.minAreaRect(contourArray[i]));
+        }
+        console.log(minAreaBoxArray);
+
+        angle = minAreaBoxArray[1].angle;
+        if (angle < -45) {
+          return 1.0 * (90 + angle);
+        } else {
+          return angle;
+        }
+      }
+
+      function rotateImage(img, angle) {
+        let newImg = img.clone();
+        let height = newImg.size().height;
+        let width = newImg.size().width;
+        let center = new cv.Point(width / 2, height / 2);
+        let M = cv.getRotationMatrix2D(center, angle, 1.0);
+        cv.warpAffine(
+          newImg,
+          newImg,
+          M,
+          new cv.Size(newImg.cols, newImg.rows),
+          cv.INTER_CUBIC,
+          cv.BORDER_REPLICATE,
+          new cv.Scalar()
+        );
+
+        return newImg;
+      }
+
+      function cropRect(img, rect) {
+        let center = new cv.Point(rect[0]);
+        let size = new cv.size(rect[1]);
+        let angle = rect[2];
+        let m = cv.getRotationMatrix2D(center, angle, 1);
+        let img_rot = new cv.Mat();
+        let img_crop = new cv.Mat();
+        cv.warpAffine(img, img_rot, m, size);
+        cv.getRectSubPix;
+      }
+    </script>
+    <script
+      async
+      src="script.js"
+      onload="onOpenCvReady();"
+      type="text/javascript"
+    ></script>
+  </body>
+</html>

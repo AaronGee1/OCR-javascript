@@ -10,6 +10,7 @@
       crossorigin="anonymous"
     />
     <script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
+    <link rel="stylesheet" href="main.css" />
     <style type="text/css">
       /* Start by setting display:none to make this hidden.
 Then we position it in relation to the viewport window
@@ -42,6 +43,17 @@ modal element will be visible */
     </style>
   </head>
   <body>
+    <ul class="nav">
+      <li class="nav-item">
+        <a class="nav-link" href="#">Aaron Gee</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" href="#">SIR Model</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">OCR</a>
+      </li>
+    </ul>
     <div class="container">
       <div class="jumbotron">
         <h1>Object Character Recognition</h1>
@@ -373,7 +385,7 @@ modal element will be visible */
     </script>
     <script
       async
-      src="script.js"
+      src="ocrscript.js"
       onload="onOpenCvReady();"
       type="text/javascript"
     ></script>
